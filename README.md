@@ -96,7 +96,7 @@
    Para nuestro desarrollo ya que al momento de implementarse no se debeia afectar la estructura propia en la instalaciones de la plataforma electromecanica como de las cabinas el sistema de conteo por cabinas se debe realizar mediante un sensor de deteccion magnetico de tipo magnetico que conmuta en presencia de un campo magnetico de modo que al acercarse a una zona donde un iman se podra sensar el paso de una cabina realizando un ciclo en la estacion.
    Con ello este este impulso detecta se lleva al microcontrolador de modo que su trasmicion se enviara mediante el LoRa SX1278 cuya tarea es enviar el paquete de datos direcionado de modo que datara el numero de cabina, este paso se lleva a cabo mediante la comunicacion SPI (Serial Peripheral Interface), que permitira inicializar el modulo de comucacion, configurar los modos de operacion (baudrate, sleep, entre otros), enviar la trama de registros para cada una de las operaciones cuando se detecta, espor eso que nuestro mayor reto ha sido entablar este procotolo de comunicacion lo cual estara veremos con detenimiento:
 
-     ## Aspectos Generales
+  ## Aspectos Generales
 
      El protocolo SPI (Serial Peripheral Interface) es un estándar de comunicación síncrona serial ampliamente utilizado en sistemas embebidos para interconectar microcontroladores con periféricos digitales. Sus características fundamentales incluyen:
 
