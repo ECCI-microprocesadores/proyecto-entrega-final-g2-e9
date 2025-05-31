@@ -89,9 +89,38 @@
 
   A continuacion se mostrara como se realiza un ciclo por cabina
 
-   [![Vista previa del ciclo de cabina](./imagen_preview.jpg)](./Ciclo.mp4)
+   [ciclo de cabina](./Ciclo.mp4)
 
-  ##  
+  ##  Investigacion
+ 
+   Para nuestro desarrollo ya que al momento de implementarse no se debeia afectar la estructura propia en la instalaciones de la plataforma electromecanica como de las cabinas el sistema de conteo por cabinas se debe realizar mediante un sensor de deteccion magnetico de tipo magnetico que conmuta en presencia de un campo magnetico de modo que al acercarse a una zona donde un iman se podra sensar el paso de una cabina realizando un ciclo en la estacion.
+   Con ello este este impulso detecta se lleva al microcontrolador de modo que su trasmicion se enviara mediante el LoRa SX1278 cuya tarea es enviar el paquete de datos direcionado de modo que datara el numero de cabina, este paso se lleva a cabo mediante la comunicacion SPI (Serial Peripheral Interface), que permitira inicializar el modulo de comucacion, configurar los modos de operacion (baudrate, sleep, entre otros), enviar la trama de registros para cada una de las operaciones cuando se detecta, espor eso que nuestro mayor reto ha sido entablar este procotolo de comunicacion lo cual estara veremos con detenimiento:
+
+     ## Aspectos Generales
+
+     El protocolo SPI (Serial Peripheral Interface) es un estándar de comunicación síncrona serial ampliamente utilizado en sistemas embebidos para interconectar microcontroladores con periféricos digitales. Sus características fundamentales incluyen:
+
+      - Comunicación full-duplex : Permite transmisión y recepción simultánea de datos.
+      - Arquitectura maestro-esclavo : Un dispositivo maestro controla la comunicación con uno o múltiples esclavos.
+      - Interfaz de 4 hilos :
+
+       - MOSI (Master Out Slave In): Línea para datos del maestro al esclavo
+       - MISO (Master In Slave Out): Línea para datos del esclavo al maestro
+       - SCK (Serial Clock): Señal de reloj generada por el maestro
+       - NSS/CS (Slave Select/Chip Select): Señal para seleccionar el dispositivo esclavo
+
+
+     - Configuración flexible : mediante los parámetros CPOL (polaridad del reloj) y CPHA (fase del reloj), que determinan el modo de operación (0-3).
+     - Velocidades elevadas : Permite tasas de transferencia significativamente superiores a otros protocolos como I²C o UART.
+
+  ## Ventajas del SPI en Aplicaciones de Radiofrecuencia
+   La implementación del protocolo SPI en sistemas de monitoreo por radiofrecuencia ofrece ventajas significativas debido a sus características intrínsecas. La naturaleza de alta velocidad del SPI permite la adquisición y procesamiento de datos en tiempo real, aspecto crítico en aplicaciones donde se requiere analizar señales RF con precisión. Con tasas de transferencia que pueden alcanzar varios MHz, el SPI facilita la comunicación eficiente entre los microcontroladores y componentes RF como sintetizadores de frecuencia, amplificadores digitalmente controlados y convertidores analógico-digitales de alta velocidad.
+   La comunicación full-duplex del SPI resulta particularmente valiosa en sistemas de monitoreo RF donde es necesario transmitir comandos de configuración mientras simultáneamente se reciben datos de medición. Esta capacidad reduce la latencia del sistema y mejora la eficiencia operativa, permitiendo ajustes dinámicos de parámetros como frecuencia, ganancia o ancho de banda sin interrumpir el proceso de adquisición de datos.
+
+  ## Consideraciones de Implementación para Sistemas RF
+   En el diseño de sistemas de monitoreo por radiofrecuencia basados ​​en SPI, deben considerar aspectos críticos como la integridad de la señal y el manejo de interferencias. La proximidad de componentes RF de alta potencia puede introducir ruido en las líneas de comunicación SPI, por lo que es recomendable implementar técnicas de aislamiento y blindaje adecuadas. Las líneas de transmisión deben diseñarse con impedancias controladas y longitudes minimizadas para reducir los efectos de reflexión y degradación de señal.
+   La selección del modo SPI apropiado (CPOL/CPHA) debe realizarse considerando las especificaciones de los componentes RF específicos utilizados en el sistema. Muchos dispositivos RF modernos, como los transceptores digitales y analizadores de espectro integrados, especifican modos SPI particulares para su correcta operación. Además, la frecuencia del reloj SCK debe seleccionarse cuidadosamente para equilibrar la velocidad de transferencia con la estabilidad del sistema, especialmente en entornos con alta exposición a radiofrecuencia.
+     
 
 
 ## Diagramas
