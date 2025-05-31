@@ -89,9 +89,7 @@
 
   A continuacion se mostrara como se realiza un ciclo por cabina
 
-    <video src="Ciclo.mp4" controls="controls" style="max-width: 730px;">
-    </video>
-  
+   [Ver video: Ciclo de cabina](./Ciclo.mp4)
 
 
 
