@@ -89,7 +89,9 @@
 
   A continuacion se mostrara como se realiza un ciclo por cabina
 
-   [Ver video del ciclo de cabina](./Ciclo.mp4)
+   [![Vista previa del ciclo de cabina](./imagen_preview.jpg)](./Ciclo.mp4)
+
+  ##  
 
 
 ## Diagramas
