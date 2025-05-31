@@ -89,8 +89,9 @@
 
   A continuacion se mostrara como se realiza un ciclo por cabina
 
-   ![Ciclo de cabina](./Ciclo.gif)
-
+   git add Ciclo.mp4
+   git commit -m "Añadir video del ciclo de cabina"
+   git push
   
 
 
