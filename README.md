@@ -104,13 +104,13 @@
     - Arquitectura maestro-esclavo : Un dispositivo maestro controla la comunicación con uno o múltiples esclavos.
     - Interfaz de 4 hilos :
 
-     - MOSI (Master Out Slave In): Línea para datos del maestro al esclavo
-     - MISO (Master In Slave Out): Línea para datos del esclavo al maestro
-     - SCK (Serial Clock): Señal de reloj generada por el maestro
-      - NSS/CS (Slave Select/Chip Select): Señal para seleccionar el dispositivo esclavo
+    - MOSI (Master Out Slave In): Línea para datos del maestro al esclavo
+   - MISO (Master In Slave Out): Línea para datos del esclavo al maestro
+   - SCK (Serial Clock): Señal de reloj generada por el maestro
+   - NSS/CS (Slave Select/Chip Select): Señal para seleccionar el dispositivo esclavo
 
 
-    - Configuración flexible : mediante los parámetros CPOL (polaridad del reloj) y CPHA (fase del reloj), que determinan el modo de operación (0-3).
+   - Configuración flexible : mediante los parámetros CPOL (polaridad del reloj) y CPHA (fase del reloj), que determinan el modo de operación (0-3).
    - Velocidades elevadas : Permite tasas de transferencia significativamente superiores a otros protocolos como I²C o UART.
 
   ## Ventajas del SPI en Aplicaciones de Radiofrecuencia
