@@ -121,7 +121,14 @@
    En el diseño de sistemas de monitoreo por radiofrecuencia basados ​​en SPI, deben considerar aspectos críticos como la integridad de la señal y el manejo de interferencias. La proximidad de componentes RF de alta potencia puede introducir ruido en las líneas de comunicación SPI, por lo que es recomendable implementar técnicas de aislamiento y blindaje adecuadas. Las líneas de transmisión deben diseñarse con impedancias controladas y longitudes minimizadas para reducir los efectos de reflexión y degradación de señal.
    La selección del modo SPI apropiado (CPOL/CPHA) debe realizarse considerando las especificaciones de los componentes RF específicos utilizados en el sistema. Muchos dispositivos RF modernos, como los transceptores digitales y analizadores de espectro integrados, especifican modos SPI particulares para su correcta operación. Además, la frecuencia del reloj SCK debe seleccionarse cuidadosamente para equilibrar la velocidad de transferencia con la estabilidad del sistema, especialmente en entornos con alta exposición a radiofrecuencia.
      
+ ## Aplicacion comunicacion SPI en el proyecto
 
+   En nuestro proyecto de monitoreo de ciclos para cabinas, la implementación SPI opera específicamente en Modo 0 (CPOL=0, CPHA=0), donde el reloj permanece en estado bajo durante inactividad y los datos se muestrean en los flancos ascendentes, configuración óptima para el módulo SX1278. La señal de reloj SCK se genera a una frecuencia conservadora de 250 kHz (derivada de Fosc/64 con el oscilador principal a 16MHz), equilibrando velocidad y estabilidad para garantizar comunicaciones confiables en entornos industriales con potencial ruido electromagnético. Esta implementación SPI gestiona meticulosamente los tiempos críticos de configuración (5μs antes de iniciar transferencias) y espera (5μs al finalizar), esenciales para la sincronización precisa con el SX1278. Los pines RC3 (SCK), RC4 (MISO), RC5 (MOSI) y RA5 (CS) del PIC18F45K22 se dedican exclusivamente a esta interfaz, mientras el sistema implementa verificaciones de integridad que aseguran transferencias exitosas mediante lecturas/escrituras de prueba a registros específicos como el REG_VERSION (0x42). Esta robusta arquitectura de comunicación permite transmitir confiablemente los datos capturados por los sensores Reed hacia el módulo LoRa, que posteriormente los propaga a la estación receptora más cercana, formando así el núcleo operativo de nuestro sistema de monitoreo automatizado.
+
+   ![SPI trasacction](Transaccion_SPI.png)  
+    Imagen.1 Transaccion registro de reconocimiento de chip SX1278 Ra-01
+
+    
 
 ## Diagramas
 
