@@ -98,20 +98,20 @@
 
   ## Aspectos Generales
 
-     El protocolo SPI (Serial Peripheral Interface) es un estándar de comunicación síncrona serial ampliamente utilizado en sistemas embebidos para interconectar microcontroladores con periféricos digitales. Sus características fundamentales incluyen:
+    El protocolo SPI (Serial Peripheral Interface) es un estándar de comunicación síncrona serial ampliamente utilizado en sistemas embebidos para interconectar microcontroladores con periféricos digitales. Sus características fundamentales incluyen:
 
-      - Comunicación full-duplex : Permite transmisión y recepción simultánea de datos.
-      - Arquitectura maestro-esclavo : Un dispositivo maestro controla la comunicación con uno o múltiples esclavos.
-      - Interfaz de 4 hilos :
+    - Comunicación full-duplex : Permite transmisión y recepción simultánea de datos.
+    - Arquitectura maestro-esclavo : Un dispositivo maestro controla la comunicación con uno o múltiples esclavos.
+    - Interfaz de 4 hilos :
 
-       - MOSI (Master Out Slave In): Línea para datos del maestro al esclavo
-       - MISO (Master In Slave Out): Línea para datos del esclavo al maestro
-       - SCK (Serial Clock): Señal de reloj generada por el maestro
-       - NSS/CS (Slave Select/Chip Select): Señal para seleccionar el dispositivo esclavo
+     - MOSI (Master Out Slave In): Línea para datos del maestro al esclavo
+     - MISO (Master In Slave Out): Línea para datos del esclavo al maestro
+     - SCK (Serial Clock): Señal de reloj generada por el maestro
+      - NSS/CS (Slave Select/Chip Select): Señal para seleccionar el dispositivo esclavo
 
 
-     - Configuración flexible : mediante los parámetros CPOL (polaridad del reloj) y CPHA (fase del reloj), que determinan el modo de operación (0-3).
-     - Velocidades elevadas : Permite tasas de transferencia significativamente superiores a otros protocolos como I²C o UART.
+    - Configuración flexible : mediante los parámetros CPOL (polaridad del reloj) y CPHA (fase del reloj), que determinan el modo de operación (0-3).
+   - Velocidades elevadas : Permite tasas de transferencia significativamente superiores a otros protocolos como I²C o UART.
 
   ## Ventajas del SPI en Aplicaciones de Radiofrecuencia
    La implementación del protocolo SPI en sistemas de monitoreo por radiofrecuencia ofrece ventajas significativas debido a sus características intrínsecas. La naturaleza de alta velocidad del SPI permite la adquisición y procesamiento de datos en tiempo real, aspecto crítico en aplicaciones donde se requiere analizar señales RF con precisión. Con tasas de transferencia que pueden alcanzar varios MHz, el SPI facilita la comunicación eficiente entre los microcontroladores y componentes RF como sintetizadores de frecuencia, amplificadores digitalmente controlados y convertidores analógico-digitales de alta velocidad.
