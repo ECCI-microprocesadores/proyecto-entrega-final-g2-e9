@@ -89,7 +89,9 @@
 
   A continuacion se mostrara como se realiza un ciclo por cabina
 
-   [Ver video: Ciclo de cabina](./Ciclo.mp4)
+   A continuacion se mostrara como se realiza un ciclo por cabina
+
+   [Ver video del ciclo de cabina](https://github.com/juaneto01/proyecto-entrega-final-g2-e9/releases/download/v1.0/Ciclo.mp4)
 
 
 
