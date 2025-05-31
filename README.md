@@ -128,11 +128,12 @@
    ![SPI trasacction](Transaccion_SPI.png)  
     Imagen.1 Transaccion registro de reconocimiento de chip SX1278 Ra-01
 
-    
+
 
 ## Diagramas
 
-
+![SPI trasacction](Test_Communication.jpg)  
+    Diagrama.1 Test de comunicacion al iniciar modulo LoRa.
 
 ## Conclusiones
 
