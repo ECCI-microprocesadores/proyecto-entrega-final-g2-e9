@@ -89,10 +89,7 @@
 
   A continuacion se mostrara como se realiza un ciclo por cabina
 
-   git add Ciclo.mp4
-   git commit -m "Añadir video del ciclo de cabina"
-   git push
-  
+   [Ver video del ciclo de cabina](./Ciclo.mp4)
 
 
 ## Diagramas
