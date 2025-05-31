@@ -89,7 +89,7 @@
 
   A continuacion se mostrara como se realiza un ciclo por cabina
 
-   [Ver video del ciclo de cabina](./Ciclo.mp4)
+   ![Ciclo de cabina](./Ciclo.gif)
 
   
 
