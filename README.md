@@ -128,12 +128,103 @@
    ![SPI trasacction](Transaccion_SPI.png)  
     Imagen.1 Transaccion registro de reconocimiento de chip SX1278 Ra-01
 
+  
+   ## Como funciona el codigo para hacer posible la comunicacion?
 
+   Mediante los pines propios definidos por defecto del fabricante y haciendo uso de el periferico MSSP1 para los pines mencionados con ello sus registros de configuracion desde el datasheet y lograr configurar a travez del hardware del microcontrolador cada una de las lineas tal que la comunicacion SPI sea transmitida usando la arquitectura del PIC, de la siguiente manera estara configurado:
 
+   Para el registro seleccionamos los puertos de la siguiente manera usando los registros propios:
+    
+   - TRISCbits.TRISC3 = 0     SCK como salida
+   - TRISCbits.TRISC4 = 1     SDI (MISO) como entrada
+   - TRISCbits.TRISC5 = 0     SDO (MOSI) como salida
+   
+   Para el registro que toma inicialmente alli tendremos a (Synchronous Serial Port 1) (Puerto serie síncrono 1) "SSP1" configura el puerto 
+
+   ![SPI Configuraion Port](registrer_SSP1STAT.jpg)  
+    Imagen.2 Registro de configuracion SSP1TAT tomado del datasheet.
+   
+   Esta implementacion en el proyecto esta configurada con el valor 0x40 (binario: 01000000) el registro SSP1STAT (Synchronous Serial Port 1 Status register) alli especificado tenemos para sus configuraciones:
+   
+   - (Bit 7) Bit de control de fase de muestreo, SMP = 0,El muestreo ocurre en la mitad del tiempo de bit alli garantiza que los datos se lean cuando son más estables proporcionando suficiente tiempo de setup para que el dispositivo esclavo presente los datos correctos reduciendo errores de comunicación a distancias más largas o con señales menos ideales
+   - (Bit 6) Bit de control de borde de reloj, SCK = 1, alli define en qué transición del reloj ocurre la transmisión de datos en especifico Los datos se transmiten en la transición del reloj de activo a inactivo (flanco descendente cuando CKP=0).
+   - (Bit 5-1) Estos bit estan desabilitados deshabilitados ya que son netamente configuracion para el protocolo I2C, para el protocolo SPI se toman sin uso. 
+   - (Bit 0) Indica si el buffer de recepción está lleno, BF = 0, Este bit es de solo lectura y se establece automáticamente por hardware. El valor 0 aquí simplemente inicializa el registro, pero no afecta al bit BF.
+
+   Nuestro siguiente registro poe desglozar es el registro SSP1CON1 (Synchronous Serial Port 1 Control 1) para cada uno de los bits de configuracion, en el codigo podemos ver que SSP1CON1 toma el valor 0x02 (en binario 00000010) vamos a justificarlo:
+
+   - (Bit 7) Detecta colisiones de escritura en el buffer de transmisión SPI (Write COLlision) (Colision de Escritura) WCOL = 0, su valor se establece para inicializar este bit como limpio, indicando que no hay colisión de escritura.
+   - (Bit 6) este Indica que se recibió un nuevo byte cuando el buffer aún contenía datos previos no leídos (Synchronous Serial Port OVerflow) (Desbormaniento Puerto Serial Sincrono) SSPOV = 0, para nuestro codigo se configura, luego se activa en (1) cuando los datos recibidos se pierden por no leer SSP1BUF a tiempo.
+   - (Bit 5) Habilita o deshabilita todo el módulo SSP, SSPEN = 0 (Synchronous Serial Port ENable) (habilitar Puerto Serial Sincrono) inicialmente lo configuramos de estamanera ya que aqui lo necesitamos deshabilitado porque se podrían generar pulsos de reloj y datos inválidos durante la configuración.
+   - (Bit 4) Determina la polaridad del reloj en estado de reposo ,CKP =0 (ClocK Polarity) (Polaridad de reloj) Definiendo el nivel lógico del reloj cuando está inactivo entre transmisiones cuando es 0 el reloj en reposo está en nivel bajo (CPOL=0), luego Cuando es 1 el reloj en reposo está en nivel alto (CPOL=1) 
+   - (Bit 3-0)  Selecciona el modo de operación del módulo SSP y la velocidad de SCK nuestro reloj para cada transaccion SPI, SSPM = 0010 (Synchronous Serial Port Mode) (Modo del Puerto Serie Síncrono), con ello logramos el modo 0 como lo exige el datasheet del LoRa y alli nuestra frecuencia de oscilador se divide entre 64, de modo que la velocidad del reloj SPI sera igual a FOSC/64, 16MHz/64 = 250KHz 
+
+   ![SPI Configuracion SSP1CON1](SSP1CON1.1.jpg)  
+    Imagen.3 Registro de configuracion SSP1CON1 tomado del datasheet.
+
+   ![SPI Configuracion SSP1CON1](SSP1CON1.2.jpg)  
+    Imagen.4 Registro de configuracion SSP1CON1 tomado del datasheet.
+
+   Una vez teniendo claro estas configuraciones para cada uno de los registros podemos explicar cada registro especifico donde de manera individual nos dara configuraciones temporales o definitivas en la funcion de inicializacion SPI por Hardware "initSPIHardware" que no devuelve ningun valor y por lo tanto ningun parametro, como los es el caso para deshabilitar el modulo antes de iniciar su configuracion, SSP1CON1bits.SSPEN = 0 este registro es tomado de SSP1CON1 para su bit 5 SSPEN.
+   En la siguiente linea declaramos una variable temporal con caracteristicas sin signo, para valores enteros numericos, tamaño de 8 bits y de tipo defino (_t) y se encargara de asignar el valor actual contenido en el registro SSP1BUF que es el buffer de datos del modulo SPI al leer este registro se elimina cualquier dato residual que pudiera estar en el buffer:
+
+      SSP1CON1bits.SSPEN = 0;    
+      uint8_t dummy = SSP1BUF;  
+  
+   Para SSP1STAT y SSP1CON1 previamente configurados ahora si procedemos a habilitar al el modulo SPI con el registro especifico situado en SSP1CON en el bit 5 SSPEN = 1 o como se especifica la ruta propia en el codigo SSP1CON1bits.SSPEN = 1 , luego manipulamos el bit 3 SSP1IF (Host Synchronous Serial Port 1 Interrupt Flag) del registro PIR1 (Peripheral Interrupt Request Flag Register 1) alli establecemos la limpieza de la bandera de interrupcion SPI asegurando que no hayan interrupciones SPI pendientes antes de iniciar nuevas comunicaciones para lo que se establece automáticamente (1) cuando una transmisión/recepción SPI se completa.
+   Esta línea complementa la limpieza inicial del buffer (dummy = SSP1BUF) para garantizar que tanto el buffer de datos como las banderas de estado del SPI estén en un estado inicial apropiado antes de cualquier comunicación.
+
+     SSP1CON1bits.SSPEN = 1;     Habilitar el módulo SPI
+     PIR1bits.SSP1IF = 0;        Limpiar flag de interrupción
+     dummy = SSP1BUF;            Limpiar cualquier dato pendiente
+
+   ![SPI Configuracion SSP1IF](PIR1_SSP1F.jpeg)  
+    Imagen.4 Registro de configuracion SSP1IF tomado del datasheet.
+
+   Desde los registros consecuentes de la configuracion del microcontrolador PIC18F45K22 podemos concliur los detalles relevantes de el protocolo de comunicacion para escuchar y leer sobre el modulo LoRa SX1278 Ra-01 en los puertos designados, nuestra configuracion se ajusta a usar la arquitectura desde el hardware explicitamente del periferico SPI.
+
+   Luego tendremos a la funcio reset Module aparte de ser genuinamente un reinicio da al modulo un Wakeup o despertarse de modo que lo preparara para realizar alguna transaccion se vale precizar que este accion se ejecuta al pin de NSS y MOSI responde ya que Como no se llama a spiTransfer() durante estos pulsos, no hay datos específicos siendo enviados.
+
+    Reset completo del módulo SX1278
+    
+    void resetModule(void) {
+    SPI_RESET = 0;              Activar reset
+    __delay_ms(10);
+    SPI_RESET = 1;              Desactivar reset
+    __delay_ms(10);
+    
+     Ciclos de CS para despertar el módulo
+     for(uint8_t i = 0; i < 3; i++) {
+        SPI_NSS = 0;
+        __delay_ms(1);
+        SPI_NSS = 1;
+        __delay_ms(1);
+     }
+    
+     __delay_ms(10);
+   } 
+
+   Alli el pin RESET se activa y se desactiva de manera manual por software permitiendo un control preciso sobre el proceso de reinicio del dispositivo LoRa luego para despertar en un ciclo for declaramos un contador que inia en 0 se posiciona e itera hasta lograr compararse con el valor maximo que se establecio como 3 es alli que hace posible cambiar de estado a NSS con retardos de 1 milisegundo por cada cambio de estado activado como es propia la configuracion de este pin en cada flanco de descenso.
+   
+   ![Wakeup divice ](Wakeup_divice.jpeg)  
+    Imagen.5 Tecnica "Despertar modulo" alistar para iniciar transacciones.
+
+   Para la funcion de transferencia tomara valor el tipo de comunicacion ya que este es tipo full-duplex cuyo proposito es transmitir un entero numerico sin singno de 8 bits por SPI y simultáneamente recibe un entero numerico sin singno de 8 bits del dispositivo esclavo, esto consiste en hacer bidireccional los datos por cada byte que envíamos, simultáneamente recibimos otro byte.
+   En nuestro codigo La función spiTransfer establece un canal de comunicación bidireccional SPI donde uint8_t data define el byte que enviaremos al dispositivo externo, mientras que el tipo de retorno uint8_t indica que la función devolverá exactamente un byte como resultado de la operación. La variable local uint8_t receivedcrea un espacio temporal dedicado para almacenar este dato recibido, que posteriormente será retornado al código que llamó a la función  
+
+     
+
+    
+
+   
 ## Diagramas
 
-![SPI trasacction](Test_Communication.jpg)  
+![SPI trasacction](Test_Communication.jpeg)  
     Diagrama.1 Test de comunicacion al iniciar modulo LoRa.
+
+![Funcion para Transferencia de datos](func_trans.jpeg)  
+    Diagrama.2 Funcion de transferencia de datos full-duplex SPI.
+
 
 ## Conclusiones
 
