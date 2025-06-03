@@ -129,7 +129,7 @@
     Imagen.1 Transaccion registro de reconocimiento de chip SX1278 Ra-01
 
   
-   ## Como funciona el codigo para hacer posible la comunicacion?
+ ## Como funciona el codigo para hacer posible la comunicacion?
 
    Mediante los pines propios definidos por defecto del fabricante y haciendo uso de el periferico MSSP1 para los pines mencionados con ello sus registros de configuracion desde el datasheet y lograr configurar a travez del hardware del microcontrolador cada una de las lineas tal que la comunicacion SPI sea transmitida usando la arquitectura del PIC, de la siguiente manera estara configurado:
 
