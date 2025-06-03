@@ -209,14 +209,119 @@
    ![Wakeup divice ](Wakeup_divice.jpeg)  
     Imagen.5 Tecnica "Despertar modulo" alistar para iniciar transacciones.
 
-   Para la funcion de transferencia tomara valor el tipo de comunicacion ya que este es tipo full-duplex cuyo proposito es transmitir un entero numerico sin singno de 8 bits por SPI y simultáneamente recibe un entero numerico sin singno de 8 bits del dispositivo esclavo, esto consiste en hacer bidireccional los datos por cada byte que envíamos, simultáneamente recibimos otro byte.
-   En nuestro codigo La función spiTransfer establece un canal de comunicación bidireccional SPI donde uint8_t data define el byte que enviaremos al dispositivo externo, mientras que el tipo de retorno uint8_t indica que la función devolverá exactamente un byte como resultado de la operación. La variable local uint8_t receivedcrea un espacio temporal dedicado para almacenar este dato recibido, que posteriormente será retornado al código que llamó a la función  
+   Para la funcion de transferencia tomara valor teorico ya que el tipo de comunicacion es tipo full-duplex cuyo proposito es transmitir un entero numerico sin singno de 8 bits por SPI y simultáneamente recibe un entero numerico sin singno de 8 bits del dispositivo esclavo, esto consiste en hacer bidireccional los datos por cada byte que envíamos, simultáneamente recibimos otro byte.
 
-     
+   En nuestro codigo La función spiTransfer establece un canal de comunicación bidireccional SPI donde uint8_t data define el byte que enviaremos al dispositivo externo, mientras que el tipo de retorno uint8_t indica que la función devolverá exactamente un byte como resultado de la operación. La variable local uint8_t received crea un espacio temporal dedicado para almacenar este dato recibido.
 
-    
-
+   En un ciclo while verificamos el estado del bit SSP1STATbits.BF, esto mientras el "Buffer Full" no se encuentre ocupado o lleno, si se encuantra cupado en este bucle esperara hasta que el buffer se libere, impidiendo la transmisión de registros pendientes.
    
+   Como tecnica de preparacion se limpia la bandera de interrupcion SPI como caracteristica de funcionamiento esta bandera servirá como señal para detectar cuándo finaliza la transmisión, por lo que debe comenzar en cero.
+
+   Siguiente para iniciar nuestra transmision al colocar y almacenarlos datos en el registro SSP1BUF (alli escribimos el dato en el Buffer de transmision) el hardware SPI comienza automaticamente a enviar los bits al modulo LoRa generando los pulsos de reloj necesarios.
+
+   Entraremos en una espera activa tal que La línea while(!PIR1bits.SSP1IF) transforma el valor del bit de interrupción mediante el operador de negación lógica, creando un comportamiento fácil de visualizar en una tabla de estados cuando SSP1IF=0 (transmisión en progreso), la negación produce !SSP1IF=1 (condición verdadera), manteniendo el bucle activo; mientras que cuando SSP1IF=1 (transmisión completada), la negación produce !SSP1IF=0 (condición falsa), provocando la salida del bucle. Alli se monitoreara constantemente la bandera SSP1IF que se activará automáticamente cuando la transmisión SPI haya finalizado.
+   
+   Finalmente, cuando la transmisión ha concluido, el dato recibido del dispositivo externo ya está esperando en el mismo registro SSP1BUF, leeremos el byte que el dispositivo LoRa envió durante la transferencia, al ejecutar received = SSP1BUF estamos transfiriendo este byte recibido a nuestra variable local, luego con returnceived lo devolvemos como resultado de la función, permitiendo que el código que llame a spiTransfer pueda utilizar el dato recibido
+
+   Aqui complementaremos con un diagrama de bloques (Ver Diagrama 2) la explicacion.
+
+    uint8_t spiTransfer(uint8_t data) {
+    uint8_t received;
+    
+    Verificar que no hay transmisión en curso
+    while(SSP1STATbits.BF);     Esperar si el buffer está lleno
+    
+    // Limpiar flag de interrupción
+    PIR1bits.SSP1IF = 0;
+    
+    // Escribir dato al buffer de transmisión
+    SSP1BUF = data;
+    
+    // Esperar a que se complete la transmisión
+    while(!PIR1bits.SSP1IF);
+    
+    // Leer y retornar el dato recibido
+    received = SSP1BUF;
+    
+    return received;
+   }
+
+   Luego para nuestra funcion de escritura o envio de registros desde el microcontrolador hasta el modulo LoRa tiene como proposito escribir un valor especifico nombrada writeRegister declara los parametros como datos de entrada para uint8_t addr y uint8_t value, alli addr representa la direccion del registro destino mientras que value contiene el dato que sera almacenado en dicho registro, el tipo void nos dice que esta funcion ejecuta una accion sin retornar informacion al codigo que la llame.
+
+   Como paso siguiente se estabiliza el NSS en un estado logico en alto y activamos en estado bajo que lo despierta y lo prepara el modulo LoRa para recibir comandos SPI.
+
+   Esta parte del codigo viene siendo la mas importante ya que su proposito sera la transmision del byte de comando ya que la expresion (add | 0x80) utiliza la operacion OR bit a bit (BitWise) para forzar el bit 7 (Most Significant Bit) este bit mas significativo se manipula estableciendo el modo escritura, como ejemplo tomaremos el registro (registro OP_MODE) que es igual a hexal 0x01 o en binario 0b00000001, de modo que:
+   
+   - Si addr = 0x01 (registro OP_MODE), entonces 0x01 | 0x80 = 0x81
+   - En binario: 00000001 | 10000000 = 10000001
+   - El bit 7 = '1' señala "WRITE operation"
+   - Los bits 6-0 contienen la dirección real del registro
+
+   El microcontrolador envía este byte de comando mientras simultáneamente recibe un byte de respuesta del modulo LoRa que generalmente se ignora en operaciones de escritura el retardo de 2 microsegundos permite que el SX1278 decodifique el comando y prepare sus circuitos internos para recibir el dato.
+
+   En esta segunda transferencia SPI spiTransfer(value), enviamos el byte de datos que será almacenado en el registro previamente especificado en ese momento hardware SPI ejecuta nuevamente el protocolo full-duplex mientras transmitimos nuestro value el modulo LoRa podría enviar datos de respuesta (típicamente ignorados) internamente, el chip toma este byte y lo escribe en el registro correspondiente de su memoria interna.
+
+   Para garantizar que el modulo LoRa tenga suficiente tiempo para procesar completamente el byte recibido y ejecutar la escritura interna antes que se desactive la comunicacion generamos un retardo de 5 microsegundos. Al ejecutar SPI_NSS = 1, liberamos el chip del bus SPI, permitiendo que entre en estado de espera el retardo de 10 microsegundos  crea una ventana de seguridad temporal que evita interferencias entre transacciones consecutivas y permite que el chip complete cualquier operación interna pendiente liberando el bus SPI.
+
+   void writeRegister(uint8_t addr, uint8_t value) {
+    // Asegurar que CS está alto antes de comenzar
+    SPI_NSS = 1;
+    __delay_us(10);
+    
+    SPI_NSS = 0;                // Activar CS
+    __delay_us(5);              // Setup time para CS
+    
+    spiTransfer(addr | 0x80);   // Dirección con bit de escritura (bit 7 = 1)
+    __delay_us(2);              // Pequeño delay entre bytes
+    spiTransfer(value);         // Valor a escribir
+    
+    __delay_us(5);              // Hold time para CS
+    SPI_NSS = 1;                // Desactivar CS
+    __delay_us(10);             // Delay entre transacciones
+   }  
+   
+   Para Nuestra funcion readRegister leera los datos que provengan del modulo LoRa en este proceso extraemos datos de sus registros internos donde justificaremos que la funcion devuelve un valor declarando el parametro uint8_t addr (direccion) como dato de entrada representando la direccion del registro que queremos leer, uint8_t value esta función tiene un propósito bidireccional al deber  capturar y retornar el dato leído del modulo LoRa, La variable value actúa como buffer temporal para almacenar el byte recibido antes de devolverlo al código que la llame.
+
+   La transmision de un comando de lectura, durante esta transferencia, enviamos el comando de lectura y descartamos el byte que el modulo LoRa nos devuelve ya que no contiene datos útiles aun, para esto veremos el emascaramiento del registro asi:
+
+   - La máscara 0x7F en binario es: 01111111
+   - El operador AND (&) fuerza el bit 7 a '0'
+   - Ejemplo: si addr = 0x81, entonces 0x81 & 0x7F = 0x01
+   - En binario: 10000001 & 01111111 = 00000001
+
+   Manipulamos el Bit 7 = '0' para leer.
+
+  Para la recepción del dato, implementamos el principio fundamental del protocolo SPI Full-Duplex la transferencia bidireccional simultánea. Dado que el protocolo SPI requiere que para recibir un byte debemos obligatoriamente enviar un byte (para generar los pulsos de reloj necesarios), transmitimos un dummy byte con valor 0x00 mediante la función spiTransfer(). El valor retornado por esta función, que contiene el dato real enviado por el modulo LoRa, se asigna a la variable local value que actúa como buffer temporal para almacenar el byte leído del registro antes de retornarlo al código que la llama.
+
+  En la inicialización del módulo LoRa, no tenemos ningún dato de entrada garantizado porque el módulo puede estar en cualquier estado al momento del encendido. El chip SX1278 podría estar apagado, en un estado indefinido, o simplemente no responder a las primeras comunicaciones SPI. Por esta razón, el proceso comienza con un reset físico completo del módulo para garantizar un estado limpio y conocido.
+
+ El principio fundamental aquí es la verificación de presencia y funcionamiento del hardware. El módulo LoRa tiene un registro especial de versión que actúa como una "firma digital" del chip siempre debe devolver el valor 0x12 cuando está funcionando correctamente. Este registro es de solo lectura y nunca cambia, por lo que es perfecto para verificar que la comunicación SPI está funcionando y que tenemos el chip correcto conectado.
+ 
+ El bucle de reintentos implementa una estrategia de robustez porque en sistemas embebidos es común que las primeras comunicaciones fallen debido a tiempos de estabilización, ruido eléctrico, o problemas de alimentación. Cada intento incluye un reset completo y un delay para dar tiempo al módulo de estabilizarse. Si después de 5 intentos no obtenemos la respuesta correcta, asumimos que hay un problema de hardware y abortamos la inicialización.
+  
+  [Ver diagrama de flujo, inicializacion y bucle de reintentos, Diagrama 3.1 Incializacion modulo LoRa]
+
+ Una vez confirmada la presencia del módulo, entramos en la fase de configuración de modo operativo. El principio aquí es que el chip SX1276/78 puede funcionar en dos modos completamente diferentes: modo FSK/OOK (modulación tradicional) y modo LoRa (modulación propietaria de Semtech). Estos modos son mutuamente excluyentes y requieren configuraciones completamente diferentes.
+
+ El proceso comienza verificando nuevamente la versión del chip porque queremos estar absolutamente seguros de que tenemos el hardware correcto antes de proceder con configuraciones que podrían dañar un chip diferente. Esta verificación adicional actúa como una barrera de seguridad.
+
+ La transición al modo Sleep es obligatoria y crítica porque el chip solo permite cambiar ciertos registros fundamentales cuando está en este modo. Es como poner un carro en "parking" antes de cambiar la transmisión el chip protege sus registros críticos para evitar configuraciones inconsistentes durante la operación. Una vez en modo Sleep, activamos el bit de modo LoRa, que reconfigura internamente todo el DSP del chip para procesar señales LoRa en lugar de FSK.
+
+ Cada cambio de modo se verifica leyendo de vuelta el registro correspondiente porque la escritura SPI puede fallar silenciosamente. Si no podemos cambiar al modo LoRa, significa que hay un problema fundamental con el chip o la comunicación, y es mejor abortar que continuar con una configuración inválida.
+
+  [Ver diagrama de flujo, verificacion de version y configuracion de modos, Diagrama 3.2 Incializacion modulo LoRa]
+
+  En esta fase final, el módulo ya está en modo LoRa pero sin parámetros específicos, por lo que necesitamos configurar todos los aspectos de la comunicación radio. El principio aquí es establecer un "perfil de comunicación" completo que defina exactamente cómo nuestro módulo va a transmitir y recibir datos.
+ La configuración de frecuencia establece la portadora central de 433MHz, que se calcula mediante un algoritmo interno del chip que divide la frecuencia deseada entre múltiples registros. Esta frecuencia debe ser exacta porque una desviación de pocos kHz puede impedir completamente la comunicación con otros dispositivos LoRa.
+
+ Los parámetros del módem LoRa (Spreading Factor, Bandwidth, Code Rate) definen el balance entre velocidad, alcance y robustez de la comunicación. Un Spreading Factor de 7 con ancho de banda de 125kHz proporciona una velocidad moderada con buen alcance, mientras que el Code Rate 4/5 añade redundancia para corregir errores de transmisión sin consumir demasiado ancho de banda.
+
+ La configuración de potencia activa el amplificador de alta potencia del chip, configurándolo para transmitir a máxima potencia legal (20dBm = 100mW) en la banda ISM de 433MHz. Esto maximiza el alcance de comunicación, especialmente importante en aplicaciones rurales o de sensores remotos.
+
+ La finalización con modo Standby es crucial porque es el estado operativo normal del chip. Desde Standby, el módulo puede cambiar rápidamente a modo transmisión o recepción sin reconfiguraciones adicionales. La verificación final del modo Standby confirma que toda la secuencia de configuración fue exitosa y que el módulo está listo para operación normal, si llegamos al return true, tenemos un módulo LoRa completamente funcional con parámetros estándar que garantizan interoperabilidad con otros dispositivos LoRa.
+
+ [Ver diagrama de flujo, configuracion de parametros y finalizacion, Diagrama 3.3 Incializacion modulo LoRa]
+
 ## Diagramas
 
 ![SPI trasacction](Test_Communication.jpeg)  
@@ -224,6 +329,15 @@
 
 ![Funcion para Transferencia de datos](func_trans.jpeg)  
     Diagrama.2 Funcion de transferencia de datos full-duplex SPI.
+
+![LoRa begin config](INICIALIZACIÓN_Y_BUCLE_DE_REINTENTOS.jpeg)  
+    Diagrama.3.1 Incializacion modulo LoRa. 
+
+![LoRa begin config](VERIFICACIÓN_DE_VERSIÓN_Y_CONFIGURACIÓN_DE_MODOS.jpeg)  
+    Diagrama.3.2 Incializacion modulo LoRa.
+
+![LoRa begin config](CONFIGURACIÓN_DE_PARÁMETROS_Y_FINALIZACIÓN.jpeg)  
+    Diagrama.3.3 Incializacion modulo LoRa.
 
 
 ## Conclusiones
