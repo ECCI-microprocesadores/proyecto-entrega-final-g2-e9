@@ -322,6 +322,8 @@
 
  [Ver diagrama de flujo, configuracion de parametros y finalizacion, Diagrama 3.3 Incializacion modulo LoRa]
 
+ [Montaje transreceptor LoRa](./Implementacion_LoRa.mp4)
+
 ## Diagramas
 
 ![SPI trasacction](Test_Communication.jpeg)  
@@ -342,5 +344,4 @@
 
 ## Conclusiones
 
-
-<!-- Crear una carpeta src e incluir en ella los códigos y/o el proyecto de mplab-->
+este proyecto de sistema de monitoreo de ciclos mediante radiofrecuencia ha logrado superar exitosamente los retos técnicos más complejos inherentes a la implementación del protocolo SPI con el módulo LoRa SX1278, donde la configuración meticulosa de registros SSP1STAT (0x40) y SSP1CON1 (0x02) para establecer comunicación en Modo 0 a 250kHz, junto con el manejo preciso de timing críticos y la implementación de verificaciones robustas de inicialización, han permitido transformar radicalmente el paradigma de mantenimiento desde estimaciones teóricas hacia un sistema de registro automatizado y preciso en tiempo real. Las ventajas técnicas alcanzadas mediante la arquitectura full-duplex del SPI, la detección magnética no invasiva, la transmisión LoRa de largo alcance y quedando pendiente la integración con base de datos SQL en Raspberry Pi, esto converge para crear un ecosistema integral que no solo elimina el margen de error del conteo manual sino que establece las bases para mantenimiento predictivo avanzado, optimización de inventarios y extensión de vida útil de componentes críticos, de modo que este desarrollo representa un salto tecnológico significativo hacia la modernización de sistemas de transporte masivo, demostrando que la integración inteligente de tecnologías IoT puede transformar operaciones tradicionalmente reactivas en sistemas proactivos data driven con proyecciones de reducción de costos correctivos y en optimización de repuestos, validando así la viabilidad técnica y económica de esta solución como estándar replicable para infraestructuras de transporte en otros telefericos.
